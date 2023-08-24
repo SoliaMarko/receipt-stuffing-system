@@ -32,16 +32,42 @@ const goods = [
 function App() {
   return (
     <div className="app">
-      <ReceiptStuffing />
+      <ReceiptStuffing goods={goods} />
     </div>
   );
 }
 
-function ReceiptStuffing() {
+function ReceiptStuffing({ goods }) {
+  const [inputSearch, setInputSearch] = useState("");
+  const [goodsBySearch, setGoodsBySearch] = useState(goods);
   const [selectedGoods, setSelectedGoods] = useState([]);
   const [finalSum, setFinalSum] = useState(0);
 
   useEffect(() => handleFinalSum());
+
+  function filterSearchResults(input) {
+    if (input === "" || !input) {
+      setGoodsBySearch(goods);
+      return;
+    }
+
+    input = input.trim();
+
+    setGoodsBySearch(
+      goods.filter(good =>
+        good.name.toLowerCase().startsWith(input.toLowerCase())
+      )
+    );
+  }
+
+  function handleShowAll() {
+    filterSearchResults("");
+  }
+
+  function handleInputSearch(e) {
+    setInputSearch(e.target.value);
+    filterSearchResults(inputSearch);
+  }
 
   function handleFinalSum() {
     setFinalSum(
@@ -53,11 +79,8 @@ function ReceiptStuffing() {
     );
   }
 
-  console.log("finalSum", finalSum);
-
   function handleSelectedGoods(good) {
     if (selectedGoods.some(curGood => curGood.id === good.id)) {
-      console.log("this good is already selected");
       handleQuantity("increase", good);
       handleFinalSum();
       return;
@@ -67,9 +90,6 @@ function ReceiptStuffing() {
       ...selectedGoods,
       { ...good, quantity: 1 },
     ]);
-    console.log(selectedGoods);
-
-    // TODO (fix to calculate immediately)
   }
 
   function handleRemoveSelected(good) {
@@ -100,8 +120,16 @@ function ReceiptStuffing() {
   return (
     <div className="receipt-stuffing">
       <div className="goods-container">
-        <SearchInput />
-        <Goods goods={goods} onSelectedGood={handleSelectedGoods} />
+        {goodsBySearch.length !== goods.length && (
+          <Button className="btn-show" onClick={handleShowAll}>
+            Показати всі
+          </Button>
+        )}
+        <SearchInput
+          inputSearch={inputSearch}
+          onInputSearch={handleInputSearch}
+        />
+        <Goods goods={goodsBySearch} onSelectedGood={handleSelectedGoods} />
       </div>
       {selectedGoods.length ? (
         <>
@@ -125,6 +153,18 @@ function ReceiptStuffing() {
   );
 }
 
+function SearchInput({ inputSearch, onInputSearch }) {
+  return (
+    <input
+      value={inputSearch}
+      type="text"
+      placeholder="Пошук за назвою продукту"
+      className="search-input"
+      onChange={e => onInputSearch(e)}
+    ></input>
+  );
+}
+
 function Goods({ goods, onSelectedGood }) {
   return (
     <div className="goods">
@@ -143,16 +183,6 @@ function GoodItem({ good, onSelectedGood }) {
       <p>{good.name}</p>
       <p>{good.price} Грн</p>
     </li>
-  );
-}
-
-function SearchInput() {
-  return (
-    <input
-      type="text"
-      placeholder="Пошук за назвою або виробником"
-      className="search-input"
-    ></input>
   );
 }
 

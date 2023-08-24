@@ -33,12 +33,6 @@ button {
   position: relative;
 }
 
-.btn-remove {
-  position: absolute;
-  right: 22px;
-  top: 12px;
-}
-
 .goods-container,
 .receipt-container {
   height: calc(100% - 120px);
@@ -229,4 +223,16 @@ button {
   border-radius: 10px;
   border-color: #b3b3b3;
   box-shadow: 2px 2px 2px hsla(0, 0%, 0%, 0.5);
+}
+
+.btn-remove {
+  position: absolute;
+  right: 22px;
+  top: 12px;
+}
+
+.btn-show {
+  position: absolute;
+  left: 22px;
+  top: 12px;
 }
