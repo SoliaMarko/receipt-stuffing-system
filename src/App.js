@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.scss";
 
 const goods = [
@@ -41,6 +41,8 @@ function ReceiptStuffing() {
   const [selectedGoods, setSelectedGoods] = useState([]);
   const [finalSum, setFinalSum] = useState(0);
 
+  useEffect(() => handleFinalSum());
+
   function handleFinalSum() {
     setFinalSum(
       selectedGoods
@@ -67,7 +69,6 @@ function ReceiptStuffing() {
     ]);
     console.log(selectedGoods);
 
-    handleFinalSum();
     // TODO (fix to calculate immediately)
   }
 
