@@ -39,12 +39,26 @@ function App() {
 
 function ReceiptStuffing() {
   const [selectedGoods, setSelectedGoods] = useState([]);
+  const [finalSum, setFinalSum] = useState(0);
+
+  function handleFinalSum() {
+    setFinalSum(
+      selectedGoods
+        ? selectedGoods
+            .map(curGood => curGood.sum)
+            .reduce((acc, cur) => acc + cur, 0)
+        : 0
+    );
+  }
+
+  console.log("finalSum", finalSum);
 
   function handleSelectedGoods(good) {
     if (selectedGoods.some(curGood => curGood.id === good.id)) {
       console.log("this good is already selected");
+      handleQuantity("increase", good);
+      handleFinalSum();
       return;
-      // TODO
     }
 
     setSelectedGoods(selectedGoods => [
@@ -52,6 +66,9 @@ function ReceiptStuffing() {
       { ...good, quantity: 1 },
     ]);
     console.log(selectedGoods);
+
+    handleFinalSum();
+    // TODO (fix to calculate immediately)
   }
 
   function handleRemoveSelected(good) {
@@ -60,16 +77,24 @@ function ReceiptStuffing() {
     ]);
   }
 
-  function handleDecreaseQuantity(good) {
-    const decreasedGood = selectedGoods.find(curGood => curGood.id !== good.id);
-    console.log(decreasedGood);
-
-    setSelectedGoods(selectedGoods => [
-      ...selectedGoods.filter(curGood => curGood.id !== good.id),
-    ]);
+  function handleClearSelected() {
+    setSelectedGoods([]);
   }
 
-  function handleIncreaseQuantity(good) {}
+  function handleQuantity(action = "increase", good) {
+    const updatedGoods = selectedGoods
+      .map(curGood => {
+        if (curGood.id === good.id) {
+          action === "decrease" && curGood.quantity--;
+          action === "increase" && curGood.quantity++;
+          return curGood.quantity > 0 && curGood;
+        }
+        return curGood;
+      })
+      .filter(curGood => curGood);
+
+    setSelectedGoods([...updatedGoods]);
+  }
 
   return (
     <div className="receipt-stuffing">
@@ -79,15 +104,17 @@ function ReceiptStuffing() {
       </div>
       {selectedGoods.length ? (
         <>
-          <Button className="btn-remove">Видалити чек</Button>
+          <Button className="btn-remove" onClick={handleClearSelected}>
+            Видалити чек
+          </Button>
 
           <div className="receipt-container">
             <Receipt
               selectedGoods={selectedGoods}
               onRemoveSelected={handleRemoveSelected}
-              onDecreaseQuantity={handleDecreaseQuantity}
+              onHandleQuantity={handleQuantity}
             />
-            <Total />
+            <Total finalSum={finalSum} />
           </div>
         </>
       ) : (
@@ -139,7 +166,7 @@ function ReceiptHeader() {
   );
 }
 
-function Receipt({ selectedGoods, onRemoveSelected, onDecreaseQuantity }) {
+function Receipt({ selectedGoods, onRemoveSelected, onHandleQuantity }) {
   return (
     <div className="receipt">
       <ReceiptHeader />
@@ -151,7 +178,7 @@ function Receipt({ selectedGoods, onRemoveSelected, onDecreaseQuantity }) {
               good={good}
               index={i}
               onRemoveSelected={onRemoveSelected}
-              onDecreaseQuantity={onDecreaseQuantity}
+              onHandleQuantity={onHandleQuantity}
             />
           ))}
         </ul>
@@ -160,7 +187,8 @@ function Receipt({ selectedGoods, onRemoveSelected, onDecreaseQuantity }) {
   );
 }
 
-function ReceiptItem({ good, index, onRemoveSelected, onDecreaseQuantity }) {
+function ReceiptItem({ good, index, onRemoveSelected, onHandleQuantity }) {
+  good.sum = good.quantity * good.price;
   return (
     <li className="receipt__item">
       <p className="col-1">{index + 1}</p>
@@ -168,19 +196,24 @@ function ReceiptItem({ good, index, onRemoveSelected, onDecreaseQuantity }) {
       <div className="col-3 quantity-container">
         <button
           className="quantity__btn--decrease item-btn"
-          onClick={() => onDecreaseQuantity(good)}
+          onClick={() => onHandleQuantity("decrease", good)}
         >
           -
         </button>
         <p>{good.quantity}.00</p>
-        <button className="quantity__btn--increase item-btn">+</button>
+        <button
+          className="quantity__btn--increase item-btn"
+          onClick={() => onHandleQuantity("increase", good)}
+        >
+          +
+        </button>
       </div>
       <div className="col-4 price-container">
         <div className="price">
           <p className="price__calc">
             {good.quantity}.00 &times; {good.price}
           </p>
-          <p className="price__sum">{good.quantity * good.price}</p>
+          <p className="price__sum">{good.sum}</p>
         </div>
         <button
           className="price__btn--close item-btn"
@@ -193,10 +226,10 @@ function ReceiptItem({ good, index, onRemoveSelected, onDecreaseQuantity }) {
   );
 }
 
-function Total() {
+function Total({ finalSum }) {
   return (
     <div className="total">
-      <div className="total__sum">До сплати: ХХХ грн</div>
+      <div className="total__sum">До сплати: {finalSum} грн</div>
       <div className="total__buttons">
         <Button className="pay__btn--card">Картою</Button>
         <Button className="pay__btn--cash">Готівкою</Button>
@@ -205,8 +238,12 @@ function Total() {
   );
 }
 
-function Button({ children, className }) {
-  return <button className={`main-btn ${className}`}>{children}</button>;
+function Button({ children, className, onClick }) {
+  return (
+    <button className={`main-btn ${className}`} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
 
 export default App;
